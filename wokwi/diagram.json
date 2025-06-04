@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "author": "João Domingues",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 9.6, "left": -52.76, "attrs": {} },
+    { "type": "wokwi-hc-sr04", "id": "ultrasonic1", "top": -152.1, "left": -224.9, "attrs": {} },
+    { "type": "wokwi-dht22", "id": "dht1", "top": -134.1, "left": 119.4, "attrs": {} },
+    { "type": "wokwi-led", "id": "led1", "top": 44.4, "left": 224.6, "attrs": { "color": "red" } },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 167.15,
+      "left": 163.2,
+      "attrs": { "value": "100" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "ultrasonic1:VCC", "esp:5V", "red", [ "v0" ] ],
+    [ "ultrasonic1:TRIG", "esp:5", "green", [ "v48", "h239.6", "v134.4" ] ],
+    [ "ultrasonic1:ECHO", "esp:18", "orange", [ "v57.6", "h210.4", "v115.2" ] ],
+    [ "ultrasonic1:GND", "esp:GND.2", "black", [ "v38.4", "h181.2" ] ],
+    [ "dht1:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "dht1:SDA", "esp:4", "green", [ "v0" ] ],
+    [ "dht1:VCC", "esp:5V", "red", [ "v307.2", "h-182.55" ] ],
+    [ "led1:C", "esp:GND.2", "blue", [ "h-114.8", "v-48" ] ],
+    [ "led1:A", "r1:2", "red", [ "v0" ] ],
+    [ "r1:1", "esp:2", "red", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}
