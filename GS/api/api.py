@@ -2,9 +2,11 @@ from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
 import numpy as np
+import os
 
 # Carregar modelo
-model = joblib.load('../model/flood_predictor.pkl')
+model_path = os.path.join(os.path.dirname(__file__), '..', 'model', 'flood_predictor.pkl')
+model = joblib.load(os.path.abspath(model_path))
 
 # Inicializar a API Flask
 app = Flask(__name__)
@@ -15,6 +17,7 @@ def predict():
     try:
         # Receber JSON
         data = request.get_json()
+        print(f"[LOG] Dados recebidos no /predict: {data}")  # Log dos dados recebidos
 
         # Criar DataFrame com uma linha
         df = pd.DataFrame([data])
@@ -35,4 +38,4 @@ def predict():
 
 # Rodar localmente
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host = "0.0.0.0", port=5000)

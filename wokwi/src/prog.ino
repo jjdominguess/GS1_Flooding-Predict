@@ -1,6 +1,9 @@
 #include <Arduino.h>
 #include <DHT.h>
 #include <Adafruit_Sensor.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <PubSubClient.h>
 
 // Definição dos pinos
 #define TRIG_PIN 5   // Pino Trigger do HC-SR04
@@ -8,11 +11,21 @@
 #define DHT_PIN 4    // Pino do DHT22
 #define DHT_TYPE DHT22
 #define LED_PIN 2 
+
 // Inicializa os sensores
 DHT dht(DHT_PIN, DHT_TYPE);
+WiFiClient espClient;
+PubSubClient client(espClient);
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(9600);
+    Serial.println("Conectando com WIFI...");
+    WiFi.begin("Wokwi-GUEST", "",6);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(100);
+        Serial.println(".");
+    }
+    Serial.println("Conectado ao WIFI!");
     pinMode(TRIG_PIN, OUTPUT);
     pinMode(ECHO_PIN, INPUT);
     pinMode(LED_PIN, OUTPUT);
@@ -54,8 +67,37 @@ void loop() {
     Serial.println(" %");
 
     Serial.print("LED: ");
-    Serial.print(distance_cm > 550? "Risco de Inundação": "Nível Normal");
+    Serial.println(distance_cm > 550? "Risco de Inundação": "Nível Normal");
 
     Serial.println("-----------------------");
-    delay(2000); // Aguarde antes da próxima leitura
+
+    String payload = "{\"Chuva_mm\": " + String(distance_cm) +
+                     ", \"Umidade_%\": " + String(humidity) +
+                     ", \"Temperatura_C\": " + String(temperature) +
+                     ", \"Nivel_rio_m\": " + String(distance_cm / 100) + "}";
+
+    client.publish("enchente/sensores", payload.c_str());
+
+    // Envia os dados para a API Flask via HTTP POST
+    if (WiFi.status() == WL_CONNECTED) {
+        HTTPClient http;
+        if (http.begin(espClient, "host.wokwi.internal", 5000, "/predict")) {
+            http.addHeader("Content-Type", "application/json");
+            String json = "{\"Chuva_mm\": " + String(distance_cm) +
+                        ", \"Umidade_%\": " + String(humidity) +
+                        ", \"Temperatura_C\": " + String(temperature) +
+                        ", \"Nivel_rio_m\": " + String(distance_cm / 100) + "}";
+            Serial.println("Preparando para enviar para a API...");
+            Serial.println(json);
+            int httpResponseCode = http.POST(json);
+            Serial.print("Resposta do servidor: ");
+            Serial.print(http.errorToString(httpResponseCode));
+            Serial.print("Código de resposta: ");
+            Serial.println(httpResponseCode);
+            Serial.println("Envio concluído.");
+            http.end();
+        }
+    }
+
+    delay(5000);
 }
